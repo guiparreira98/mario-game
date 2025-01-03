@@ -3,17 +3,18 @@ const pipe = document.querySelector('.pipe');
 const clouds = document.querySelector('.clouds');
 const gameOver = document.querySelector('.game-over');
 const counter = document.querySelector('.counter');
+const lastScoreElement = document.getElementById('lastScore');
 
 let isGameOver = false;
 let loop;
 let score = 0;
 let hasPassedPipe = false;
 let pipeSpeed = 1.5; 
+let isGameStarted = false;
 
 const jump = () => {
     if (!isGameOver) {
         mario.classList.add('jump');
-
         setTimeout(() => {
             mario.classList.remove('jump');
         }, 500);
@@ -44,6 +45,20 @@ const adjustPipeSpeed = () => {
     }
 }
 
+const saveScore = () => {
+    const lastScore = localStorage.getItem('lastScore');
+    if (lastScore === null || score > lastScore) {
+        localStorage.setItem('lastScore', score);
+    }
+}
+
+const loadLastScore = () => {
+    const lastScore = localStorage.getItem('lastScore');
+    if (lastScore !== null) {
+        lastScoreElement.textContent = lastScore;
+    }
+}
+
 const startGameLoop = () => {
     loop = setInterval(() => {
         const pipePosition = pipe.offsetLeft;
@@ -62,6 +77,8 @@ const startGameLoop = () => {
             gameOver.style.display = 'block';
             isGameOver = true;
 
+            saveScore(); // Salva a pontuação quando o jogo termina
+            loadLastScore(); // Atualiza a última pontuação exibida
             clearInterval(loop);
         } else if (pipePosition < 0 && !hasPassedPipe) {
             score++;
@@ -75,11 +92,18 @@ const startGameLoop = () => {
 }
 
 document.addEventListener('keydown', (event) => {
-    if (isGameOver) {
+    if (!isGameStarted) {
+        isGameStarted = true;
+        pipe.style.animation = `pipe-animation ${pipeSpeed}s infinite linear`;
+        clouds.style.animation = 'clouds-animation 20s infinite linear';
+        loadLastScore(); // Carrega a última pontuação quando o jogo começa
+        startGameLoop();
+    } else if (isGameOver) {
         resetGame();
     } else {
         jump();
     }
 });
 
-startGameLoop();
+pipe.style.animation = 'none';
+clouds.style.animation = 'none';
